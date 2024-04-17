@@ -1,150 +1,82 @@
-use std::fmt;
-use std::fmt::Formatter;
+mod front_of_house {
 
-fn main() {
-    let x = 5;
-    println!("The value of x is: {x}");
-    let y = another_function(x);
-    println!("y = {y:?}");
-    println!("The value of x is: {x}");
-    another_function(x);
-    println!("The value of x is: {x}");
-
-    let a = {
-        let b = 8;
-        println!("b = {b}");
-        b + 1
-    };
-
-    println!("a = {a:?}");
-
-    chapter_5_structs();
-    chapter_6_enums_and_pattern_matching();
-}
-
-fn another_function(mut x: i32) -> i32 {
-    x += 1;
-    println!("The value of x is: {x}");
-    x + 2
-}
-
-fn chapter_5_structs() {
-    struct User {
-        active: bool,
-        username: String,
-        email: String,
-        sign_in_count: u64,
+    pub fn greetings(s: &str) {
+        println!("front_of_house::greetings({s})");
     }
 
-    impl fmt::Display for User {
-        fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-            write!(f, "{{ active: {}, username: \"{}\", email: \"{}\", sign_in_count: {}, }}",
-                   self.active, self.username, self.email, self.sign_in_count
-            )
+    pub mod hosting {
+        pub fn add_to_waitlist() {
+            println!("front_of_house::hosting::add_to_waitlist()");
+            super::greetings("waiting list");
+            reorder_waitlist();
+        }
+
+        fn reorder_waitlist() {
+            println!("front_of_house::hosting::reorder_waitlist()");
         }
     }
 
-    let u1 = User {
-        active: false,
-        username: String::from("John Doe"),
-        email: "john.doe@world.com".to_string(),
-        sign_in_count: 0,
-    };
+    pub mod serving {
+        pub fn take_order() {
+            println!("front_of_house::serving::take_order()");
+        }
 
-    println!("u1 = {u1}");
+        pub fn take_payment_and_eat_again() {
+            println!("front_of_house::serving::take_payment_and_eat_again()");
+            super::hosting::add_to_waitlist();
+        }
 
-    fn create_user(username: &str, email: String) -> User {
-        User {
-            active: true,
-            username: String::from(username),
-            email,
-            sign_in_count: 3,
+        pub fn take_payment_and_eat_again2() {
+            println!("front_of_house::serving::take_payment_and_eat_again2()");
+            super::super::yes();  // relative path
+            crate::yes();  // absolute path
         }
     }
-
-    let u2 = create_user("username_in", "email_in".to_string());
-
-    println!("u2 = {u2}");
-
-    struct Color(u8, u8, u8);
-    let red = Color(255, 20, 10);
-    println!("red = ({}, {}, {})", red.0, red.1, red.2)
 }
 
-fn chapter_6_enums_and_pattern_matching() {
-    #[derive(Debug)]
-    enum IpAddrKind { V4, V6, }
+mod back_of_house {
 
-    let ip_four = IpAddrKind::V4;
-    let ip_six = IpAddrKind::V6;
-
-    println!("{ip_four:?}");
-    println!("{ip_six:?}");
-
-    #[derive(Debug)]
-    enum IpAddrMine {
-        V4(u8, u8, u8, u8),
-        V6(String),
+    pub struct Breakfast {
+        pub toast: String,
+        seasonal_fruit: String,
     }
 
-    let ip_home = IpAddrMine::V4(127, 0, 0, 1);
-    let ip_loopback = IpAddrMine::V6("::1".to_string());
-
-    println!("{ip_home:?}");
-    println!("{ip_loopback:?}");
-
-    fn print_ip(ip: &IpAddrMine) {
-        match ip {
-            IpAddrMine::V4(b0, b1, b2, b3) => {
-                println!("v4={b0}.{b1}.{b2}.{b3}");
-            },
-            IpAddrMine::V6(addr) => {
-                println!("v6={addr}")
-            },
-        }
-    }
-
-    print_ip(&ip_home);
-    print_ip(&ip_loopback);
-
-
-    #[derive(Debug)] // so we can inspect the state in a minute
-    enum UsState {
-        Alabama,
-        Alaska,
-        Arizona,
-        Arkansas,
-        // --snip--
-    }
-
-    enum Coin {
-        Penny,
-        Nickel,
-        Dime,
-        Quarter(UsState),
-    }
-
-    fn value_in_cents(coin: Coin) -> u8 {
-        match coin {
-            Coin::Penny => 1,
-            Coin::Nickel => 5,
-            Coin::Dime => 10,
-            Coin::Quarter(UsState::Alabama) => {
-                println!("State quarter from home sweet Alabama!");
-                25
-            },
-            Coin::Quarter(state) => {
-                println!("State quarter from {:?}!", state);
-                25
+    impl Breakfast {
+        pub fn summer(toast: &str) -> Breakfast {
+            Breakfast {
+                toast: String::from(toast),
+                seasonal_fruit: "peaches".to_string(),
             }
         }
-    }
 
-    dbg!(value_in_cents(Coin::Penny));
-    dbg!(value_in_cents(Coin::Nickel));
-    dbg!(value_in_cents(Coin::Dime));
-    dbg!(value_in_cents(Coin::Quarter(UsState::Alabama)));
-    dbg!(value_in_cents(Coin::Quarter(UsState::Alaska)));
-    dbg!(value_in_cents(Coin::Quarter(UsState::Arizona)));
-    dbg!(value_in_cents(Coin::Quarter(UsState::Arkansas)));
+        pub fn to_string(&self) -> String {
+            String::from(format!("Breakfast({} with {});", self.toast, self.seasonal_fruit))
+        }
+    }
+}
+
+fn yes() {
+    println!("yes")
+}
+
+fn main() {
+    front_of_house::greetings("enter");
+    front_of_house::hosting::add_to_waitlist();
+    front_of_house::serving::take_order();
+    front_of_house::serving::take_payment_and_eat_again();
+    front_of_house::serving::take_payment_and_eat_again2();
+
+    let mut breakfast = back_of_house::Breakfast::summer("Rye");
+    println!("{}", breakfast.to_string());
+    breakfast.toast = String::from("Wheat");
+    println!("{}", breakfast.to_string());
+
+    use_of_use();
+}
+
+fn use_of_use() {
+    println!("use of use");
+    use front_of_house::serving;
+    serving::take_order();
+    serving::take_payment_and_eat_again();
 }
