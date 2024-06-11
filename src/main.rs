@@ -1,140 +1,85 @@
-use std::collections::HashMap;
+pub trait Summary {
+    fn summarize_author(&self) -> String;
+    fn summarize(&self) -> String;
+    fn summarize2(&self) -> String {
+        format!("(Read more from {}...)", self.summarize_author())
+    }
+}
+
+pub struct NewsArticle {
+    pub headline: String,
+    pub location: String,
+    pub author: String,
+    pub content: String,
+}
+
+impl Summary for NewsArticle {
+    fn summarize_author(&self) -> String {
+        format!("'{}'", self.author)
+    }
+
+    fn summarize(&self) -> String {
+        format!("{}, by {} ({})", self.headline, self.author, self.location)
+    }
+}
+
+pub struct Tweet {
+    pub username: String,
+    pub content: String,
+    pub reply: bool,
+    pub retweet: bool,
+}
+
+impl Summary for Tweet {
+    fn summarize_author(&self) -> String {
+        format!("@{}", self.username)
+    }
+
+    fn summarize(&self) -> String {
+        format!("{}: {}", self.username, self.content)
+    }
+}
 
 fn main() {
-    let mut scores = HashMap::new();
+    let tweet = Tweet {
+        username: "horse_ebooks".to_string(),
+        content: "of course, as you probably already know, people".to_string(),
+        reply: false,
+        retweet: false,
+    };
 
-    scores.insert("Blue".to_string(), 10);
-    scores.insert("Yellow".to_string(), 50);
+    println!("1 new tweet: {}", tweet.summarize());
+    println!("1 new tweet: {}", tweet.summarize2());
 
-    let team_name = String::from("Red");
-    let score = scores.get(&team_name).copied().unwrap_or(-1);
+    let article = NewsArticle {
+        headline: "Penguins win the Stanley Cup Championship!".to_string(),
+        location: "Pittsburgh, PA, USA".to_string(),
+        author: "Iceburgh".to_string(),
+        content: "The Pittsburgh Penguins once again are the best hockey team in the NHL.".to_string(),
+    };
 
-    dbg!(score);
+    println!("article: {}", article.summarize());
+    println!("article: {}", article.summarize2());
 
-    hm1(&scores);
-    // dbg!(&scores);
-
-    hm2(scores.clone());
-    // dbg!(&scores);
-
-    hm1(&scores);
-
-    games();
-
-    tests();
+    notify_1(&article);
+    notify_2(&article);
+    notify_3(&article);
 }
 
-fn hm1(m: &HashMap<String, i32>) {
-    for (k, v) in m {
-        println!("{k} = {v}")
-    }
-}
-fn hm2(m: HashMap<String, i32>) { dbg!(m); }
-
-fn games() {
-    {
-        println!("Overwriting the value");
-        let mut scores = HashMap::new();
-        scores.insert(String::from("Blue"), 10);
-        scores.insert(String::from("Blue"), 25);
-        println!("{:?}", scores);
-    }
-    {
-        println!("Adding a Key and Value Only If a Key Isn’t Present");
-        let mut scores = HashMap::new();
-        scores.insert(String::from("Blue"), 10);
-        scores.entry(String::from("Yellow")).or_insert(50);
-        scores.entry(String::from("Blue")).or_insert(50);
-        println!("{:?}", scores);
-    }
-    {
-        println!("Updating a Value Based on the Old Value");
-        let text = "hello world wonderful world";
-        let mut map = HashMap::new();
-        for word in text.split_whitespace() {
-            let count = map.entry(word).or_insert(0);
-            *count += 1;
-        }
-        println!("{:?}", map);
-    }
+pub fn notify_1(item: &impl Summary) {
+    println!("notify_1 (a): {}", item.summarize());
+    println!("notify_1 (b): {}", item.summarize2());
 }
 
-fn tests() {
-    task_1();
-    task_2();
-    task_2_chat_gpt();
+pub fn notify_2<T: Summary>(item: &T) {
+    println!("notify_2 (a): {}", item.summarize());
+    println!("notify_2 (b): {}", item.summarize2());
 }
 
-fn task_1() {
-    // Given a list of integers, use a vector and return the median
-    // (when sorted, the value in the middle position) and mode (the
-    // value that occurs most often; a hash map will be helpful here)
-    // of the list.
-    let randoms = vec![11,33,55,77,99,22,44,66,88];
-    let mut sorted = randoms.clone();
-    sorted.sort();
-
-    let median_index = sorted.len() / 2;
-    let median = sorted.get(median_index);
-    println!("median of {:?} is {:?}", randoms, median);
-}
-
-fn task_2() {
-    let input = "Convert strings to pig latin. The first consonant of \
-    each word is moved to the end of the word and “ay” is added, so “first” \
-    becomes “irst-fay.” Words that start with a vowel have “hay” added to \
-    the end instead (“apple” becomes “apple-hay”). Keep in mind the details \
-    about UTF-8 encoding!".to_string();
-
-    let vowels = "aeiouyAEIOUY".to_string();
-
-    input.split_whitespace().for_each(|w| {
-        match w.chars().nth(0) {
-            None => {}
-            Some(c) => {
-                if vowels.contains(c) {
-                    // println!("Starts with vowel '{}':", c);
-                    print!("{w}-hay");
-                }
-                else if c.is_alphabetic() {
-                    // println!("Starts with consonant '{}'", c);
-                    print!("{}-{c}ay", &w[1..]);
-                }
-                else {
-                    // println!("Starts with unknown '{}'", c);
-                    print!("{w}");
-                }
-            }
-        }
-        // println!("...{:?} [{:?}]", w, w.chars().nth(0));
-        print!(" ");
-    });
-
-    // println!("{input}");
-    println!();
-}
-
-fn task_2_chat_gpt() {
-    let input = "Convert strings to pig latin. The first consonant of \
-    each word is moved to the end of the word and “ay” is added, so “first” \
-    becomes “irst-fay.” Words that start with a vowel have “hay” added to \
-    the end instead (“apple” becomes “apple-hay”). Keep in mind the details \
-    about UTF-8 encoding!";
-
-    let vowels = "aeiouyAEIOUY";
-
-    input.split_whitespace().for_each(|w| {
-        if let Some(c) = w.chars().next() {
-            if vowels.contains(c) {
-                print!("{}-hay", w);
-            } else if c.is_alphabetic() {
-                print!("{}-{}ay", &w[1..], c);
-            } else {
-                print!("{}", w);
-            }
-        }
-        print!(" ");
-    });
-    println!();
+pub fn notify_3<T>(item: &T) where
+    T: Summary,
+{
+    println!("notify_3 (a): {}", item.summarize());
+    println!("notify_3 (b): {}", item.summarize2());
 }
 
