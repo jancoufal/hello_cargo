@@ -1,10 +1,13 @@
+fn  add_one_v1   (x: u32) -> u32 { x + 1 }
+
 fn main() {
-    static X: i32 = 22;
-    let a: &'static i32 = &X;
-    let b: &'static i32 = &X;
 
-    println!("X: {}", X);
-    println!("a: {}", a);
-    println!("b: {}", b);
+    let add_one_v2 = |x: u32| -> u32 { x + 1 };
+    let add_one_v3 = |x|             { x + 1 };
+    let add_one_v4 = |x|               x + 1  ;
+
+    println!("v1: {}", add_one_v1(0));
+    println!("v2: {}", add_one_v2(1));
+    println!("v3: {}", add_one_v3(2));
+    println!("v4: {}", add_one_v4(3));
 }
-
