@@ -9,16 +9,16 @@ enum List {
 
 fn main() {
     let a = Rc::new(Cons(5, Rc::new(Cons(10, Rc::new(Nil)))));
-    let b = Cons(3, Rc::clone(&a));
-    let c = Cons(4, Rc::clone(&a));
+    let b = Rc::new(Cons(3, Rc::clone(&a)));
+    let c = Rc::new(Cons(4, Rc::clone(&a)));
 
-    print!("a = ");
+    print!("a (strong count {}) = ", Rc::strong_count(&a));
     print_cons(&a);
 
-    print!("b = ");
+    print!("b (strong count {}) = ", Rc::strong_count(&b));
     print_cons(&b);
 
-    print!("c = ");
+    print!("c (strong count {}) = ", Rc::strong_count(&c));
     print_cons(&c);
 }
 
