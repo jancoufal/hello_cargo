@@ -1,35 +1,89 @@
-use std::rc::Rc;
+pub trait Messenger {
+    fn send(&self, msg: &str);
+}
 
-use crate::List::{Cons, Nil};
+pub struct LimitTracker<'a, T: Messenger> {
+    messenger: &'a T,
+    value: usize,
+    max: usize,
+}
 
-enum List {
-    Cons(i32, Rc<List>),
-    Nil,
+impl<'a, T> LimitTracker<'a, T>
+where
+    T: Messenger,
+{
+    pub fn new(messenger: &'a T, max: usize) -> LimitTracker<T> {
+        LimitTracker {
+            messenger,
+            value: 0,
+            max
+        }
+    }
+
+    pub fn set_value(&mut self, value: usize) {
+        self.value = value;
+        let percentage_of_max = self.value as f64 / self.max as f64;
+        if percentage_of_max >= 1.0 {
+            self.messenger.send("Error: You are over your quota!");
+        } else if percentage_of_max >= 0.9 {
+            self.messenger.send("Urgent warning: You've used up over 90% of your quota!");
+        } else if percentage_of_max >= 0.75 {
+            self.messenger.send("Warning: You've used up over 75% of your quota!");
+        }
+    }
+}
+
+struct PrintOutMessenger {
+}
+
+impl Messenger for PrintOutMessenger {
+    fn send(&self, msg: &str) {
+        println!("{}", msg);
+    }
 }
 
 fn main() {
-    let a = Rc::new(Cons(5, Rc::new(Cons(10, Rc::new(Nil)))));
-    let b = Rc::new(Cons(3, Rc::clone(&a)));
-    let c = Rc::new(Cons(4, Rc::clone(&a)));
+    let print_out_messenger = PrintOutMessenger {};
+    let mut limit_tracker = LimitTracker::new(&print_out_messenger, 100);
 
-    print!("a (strong count {}) = ", Rc::strong_count(&a));
-    print_cons(&a);
-
-    print!("b (strong count {}) = ", Rc::strong_count(&b));
-    print_cons(&b);
-
-    print!("c (strong count {}) = ", Rc::strong_count(&c));
-    print_cons(&c);
+    for i in 0..=15 {
+        let value = i * 10usize;
+        println!("{}...", value);
+        limit_tracker.set_value(value);
+    }
 }
 
-fn print_cons(l: &List) {
-    match l {
-        Cons(v, ll) => {
-            print!("{}..", v);
-            print_cons(ll);
+#[cfg(test)]
+mod tests {
+    use std::cell::RefCell;
+    use super::*;
+
+
+    struct MockMessenger {
+        sent_messages: RefCell<Vec<String>>,
+    }
+
+    impl MockMessenger {
+        fn new() -> MockMessenger {
+            MockMessenger {
+                sent_messages: RefCell::new(vec![]),
+            }
         }
-        Nil => {
-            println!("/");
+    }
+
+    impl Messenger for MockMessenger {
+        fn send(&self, message: &str) {
+            self.sent_messages.borrow_mut().push(String::from(message));
         }
+    }
+
+    #[test]
+    fn it_sends_an_over_75_percent_warning_message() {
+        let mock_messenger = MockMessenger::new();
+        let mut limit_tracker = LimitTracker::new(&mock_messenger, 100);
+
+        limit_tracker.set_value(80);
+
+        assert_eq!(mock_messenger.sent_messages.borrow().len(), 1);
     }
 }
