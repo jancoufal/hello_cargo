@@ -1,13 +1,14 @@
+use std::sync::mpsc;
 use std::thread;
 
 fn main() {
-    let v = vec![1, 2, 3];
+    let (tx, rx) = mpsc::channel();
 
-    let handle = thread::spawn(move || {
-        println!("v: {v:?}");
+    thread::spawn(move || {
+        let val = String::from("hi");
+        tx.send(val).unwrap();
     });
 
-    // drop(v); // oh no!
-
-    handle.join().unwrap();
+    let received = rx.recv().unwrap();
+    println!("Got: {received}");
 }
