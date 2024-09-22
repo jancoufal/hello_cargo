@@ -1,24 +1,29 @@
+use std::cell::RefCell;
+use std::rc::{Rc, Weak};
+
 #[derive(Debug)]
-enum List {
-    Cons(Rc<RefCell<i32>>, Rc<List>),
-    Nil,
+struct Node {
+    value: i32,
+    parent: RefCell<Weak<Node>>,
+    children: RefCell<Vec<Rc<Node>>>,
 }
 
-use crate::List::{Cons, Nil};
-use std::cell::RefCell;
-use std::rc::Rc;
-
 fn main() {
-    let value = Rc::new(RefCell::new(5));
+    let leaf = Rc::new(Node {
+        value: 3,
+        parent: RefCell::new(Weak::new()),
+        children: RefCell::new(vec![])
+    });
 
-    let a = Rc::new(Cons(Rc::clone(&value), Rc::new(Nil)));
+    println!("leaf parent: {:?}", leaf.parent.borrow().upgrade());
 
-    let b = Cons(Rc::new(RefCell::new(3)), Rc::clone(&a));
-    let c = Cons(Rc::new(RefCell::new(4)), Rc::clone(&a));
+    let branch = Rc::new(Node {
+        value: 5,
+        parent: RefCell::new(Weak::new()),
+        children: RefCell::new(vec![Rc::clone(&leaf)]),
+    });
 
-    *value.borrow_mut() += 10;
+    *leaf.parent.borrow_mut() = Rc::downgrade(&branch);
 
-    println!("a after = {a:?}");
-    println!("b after = {b:?}");
-    println!("c after = {c:?}");
+    println!("leaf parent: {:?}", leaf.parent.borrow().upgrade());
 }
